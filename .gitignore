@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Uploaded and converted files
+uploads/
+outputs/
+
+# Environment variables
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log

@@ -1,0 +1,1136 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="SoundRip — Extract audio from any video file instantly. Supports MP4, MKV, AVI, MOV, WEBM and more. Output to MP3, AAC, WAV at any quality." />
+  <meta property="og:title" content="SoundRip — Video to Audio Converter" />
+  <title>SoundRip — Video to Audio Converter</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --neon-cyan:#00f5ff;--neon-pink:#ff2d78;--neon-purple:#bf00ff;
+      --neon-green:#00ff88;--neon-yellow:#ffe600;--neon-orange:#ff6b00;
+      --bg-primary:#080810;--bg-secondary:#0f0f1a;--bg-card:#13131f;
+      --bg-card2:#1a1a2e;--bg-input:#0d0d1a;
+      --text-primary:#f0f0ff;--text-muted:#7a7a9a;--text-dim:#4a4a6a;
+      --border:rgba(255,255,255,0.07);--border-hover:rgba(0,245,255,0.3);
+      --glow-cyan:0 0 20px rgba(0,245,255,0.4),0 0 60px rgba(0,245,255,0.15);
+      --glow-pink:0 0 20px rgba(255,45,120,0.4),0 0 60px rgba(255,45,120,0.15);
+      --glow-purple:0 0 20px rgba(191,0,255,0.4),0 0 60px rgba(191,0,255,0.15);
+      --glow-green:0 0 20px rgba(0,255,136,0.4),0 0 60px rgba(0,255,136,0.15);
+      --radius-sm:8px;--radius:16px;--radius-lg:24px;
+      --transition:0.3s cubic-bezier(0.4,0,0.2,1);
+      --font-main:'Inter',sans-serif;--font-display:'Space Grotesk',sans-serif;
+    }
+    [data-theme="light"]{
+      --bg-primary:#f0f2ff;--bg-secondary:#e4e8ff;--bg-card:#ffffff;
+      --bg-card2:#f8f9ff;--bg-input:#eef0ff;
+      --text-primary:#0a0a1f;--text-muted:#5a5a7a;--text-dim:#9a9aba;
+      --border:rgba(0,0,0,0.08);--border-hover:rgba(0,100,255,0.3);
+      --glow-cyan:0 4px 20px rgba(0,100,255,0.15);
+      --glow-pink:0 4px 20px rgba(255,45,120,0.15);
+      --glow-purple:0 4px 20px rgba(100,0,200,0.15);
+      --glow-green:0 4px 20px rgba(0,180,80,0.15);
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:var(--font-main);background:var(--bg-primary);color:var(--text-primary);overflow-x:hidden;min-height:100vh;transition:background var(--transition),color var(--transition)}
+    ::-webkit-scrollbar{width:6px}
+    ::-webkit-scrollbar-track{background:var(--bg-primary)}
+    ::-webkit-scrollbar-thumb{background:var(--neon-purple);border-radius:3px}
+    body::before{content:'';position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");pointer-events:none}
+    .grid-bg{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(0,245,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;animation:gridDrift 30s linear infinite}
+    @keyframes gridDrift{0%{background-position:0 0}100%{background-position:60px 60px}}
+    [data-theme="light"] .grid-bg{background-image:linear-gradient(rgba(0,100,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,100,255,0.04) 1px,transparent 1px)}
+    #app{position:relative;z-index:1}
+    .container{max-width:900px;margin:0 auto;padding:0 24px}
+
+    /* HEADER */
+    header{padding:18px 0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);background:rgba(8,8,16,0.85);transition:background var(--transition)}
+    [data-theme="light"] header{background:rgba(240,242,255,0.85)}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+    .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:var(--glow-cyan);animation:logoPulse 3s ease-in-out infinite}
+    @keyframes logoPulse{0%,100%{box-shadow:var(--glow-cyan)}50%{box-shadow:var(--glow-purple)}}
+    .logo-text{font-family:var(--font-display);font-size:22px;font-weight:700;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .logo-tagline{font-size:11px;color:var(--text-muted);-webkit-text-fill-color:initial;margin-top:-2px}
+    .header-actions{display:flex;align-items:center;gap:10px}
+    .theme-toggle{width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all var(--transition)}
+    .theme-toggle:hover{border-color:var(--neon-cyan);box-shadow:var(--glow-cyan);transform:rotate(20deg)}
+    .badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));color:#000}
+
+    /* HERO */
+    .hero{text-align:center;padding:56px 0 36px}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--neon-cyan);background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);padding:6px 16px;border-radius:20px;margin-bottom:20px;animation:fadeInDown 0.6s ease both}
+    .hero-eyebrow::before{content:'';width:6px;height:6px;background:var(--neon-cyan);border-radius:50%;animation:blink 1.5s ease-in-out infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+    .hero-title{font-family:var(--font-display);font-size:clamp(34px,6vw,62px);font-weight:800;line-height:1.1;margin-bottom:16px;animation:fadeInDown 0.6s 0.1s ease both}
+    .gradient-text{background:linear-gradient(90deg,var(--neon-cyan),var(--neon-pink),var(--neon-purple));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmerText 3s linear infinite}
+    @keyframes shimmerText{0%{background-position:0% center}100%{background-position:200% center}}
+    .hero-sub{font-size:17px;color:var(--text-muted);max-width:520px;margin:0 auto 28px;line-height:1.6;animation:fadeInDown 0.6s 0.2s ease both}
+    .hero-formats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;animation:fadeInDown 0.6s 0.3s ease both}
+    .format-chip{font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;border:1px solid;letter-spacing:0.5px}
+    .format-chip.input{border-color:rgba(0,245,255,0.3);color:var(--neon-cyan);background:rgba(0,245,255,0.05)}
+    .format-chip.output{border-color:rgba(255,45,120,0.3);color:var(--neon-pink);background:rgba(255,45,120,0.05)}
+    .format-chip.arrow{border:none;color:var(--text-dim);background:transparent;font-size:16px}
+
+    /* STATS */
+    .stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;animation:fadeInUp 0.6s 0.4s ease both}
+    .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;transition:all var(--transition)}
+    .stat-card:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+    .stat-value{font-family:var(--font-display);font-size:28px;font-weight:700;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block}
+    .stat-label{font-size:12px;color:var(--text-muted);margin-top:4px}
+
+    /* CONVERTER CARD */
+    .converter-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px;margin-bottom:28px;position:relative;overflow:hidden;animation:fadeInUp 0.6s 0.45s ease both}
+    .converter-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,245,255,0.03),transparent,rgba(191,0,255,0.03));pointer-events:none}
+
+    /* DROP ZONE */
+    .drop-zone{border:2px dashed rgba(0,245,255,0.25);border-radius:var(--radius);padding:48px 24px;text-align:center;cursor:pointer;transition:all var(--transition);background:rgba(0,245,255,0.02);position:relative;overflow:hidden}
+    .drop-zone.drag-over,.drop-zone:hover{border-color:var(--neon-cyan);background:rgba(0,245,255,0.06);transform:scale(1.005)}
+    .drop-zone.drag-over{background:rgba(0,245,255,0.09)}
+    .drop-icon{font-size:56px;margin-bottom:16px;display:block;animation:float 3s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    .drop-title{font-family:var(--font-display);font-size:20px;font-weight:600;margin-bottom:8px}
+    .drop-subtitle{font-size:14px;color:var(--text-muted);margin-bottom:20px}
+    .drop-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:8px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple));color:#000;font-weight:700;font-size:14px;border:none;cursor:pointer;transition:all var(--transition)}
+    .drop-btn:hover{transform:translateY(-2px);box-shadow:var(--glow-cyan)}
+    .drop-formats{margin-top:16px;font-size:12px;color:var(--text-dim)}
+    #file-input{display:none}
+
+    /* FILE QUEUE */
+    .file-queue{margin-top:20px;display:flex;flex-direction:column;gap:12px}
+    .file-item{background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start;animation:slideIn 0.3s ease both;transition:border-color var(--transition)}
+    .file-item:hover{border-color:var(--border-hover)}
+    @keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    .file-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .file-meta{min-width:0}
+    .file-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+    .file-details{display:flex;gap:10px;flex-wrap:wrap}
+    .file-detail-chip{font-size:11px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:3px 8px;border-radius:4px}
+    .file-remove{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:4px;border-radius:6px;transition:all var(--transition);font-size:18px;line-height:1;flex-shrink:0}
+    .file-remove:hover{color:var(--neon-pink);background:rgba(255,45,120,0.1)}
+
+    /* PROGRESS */
+    .file-status-bar{grid-column:1/-1;margin-top:4px}
+    .progress-track{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-bottom:6px}
+    .progress-fill{height:100%;border-radius:3px;width:0%;transition:width 0.4s ease;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-purple));box-shadow:0 0 10px rgba(0,245,255,0.5);position:relative}
+    .progress-fill.done{background:linear-gradient(90deg,var(--neon-green),#00c060);box-shadow:0 0 10px rgba(0,255,136,0.5)}
+    .progress-fill.err{background:var(--neon-pink);box-shadow:0 0 10px rgba(255,45,120,0.5)}
+    .progress-fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:40px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.35));animation:pShimmer 1s ease-in-out infinite}
+    @keyframes pShimmer{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+    .progress-info{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted)}
+    .status-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px}
+    .status-badge.pending{background:rgba(255,255,255,0.05);color:var(--text-muted)}
+    .status-badge.converting{background:rgba(0,245,255,0.1);color:var(--neon-cyan)}
+    .status-badge.done{background:rgba(0,255,136,0.1);color:var(--neon-green)}
+    .status-badge.error{background:rgba(255,45,120,0.1);color:var(--neon-pink)}
+    .status-badge.cancelled{background:rgba(255,255,255,0.05);color:var(--text-muted)}
+    .spinner{width:10px;height:10px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .file-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .btn-sm{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid;cursor:pointer;transition:all var(--transition);text-decoration:none}
+    .btn-sm.download{background:linear-gradient(135deg,var(--neon-green),#00c060);color:#000;border-color:transparent}
+    .btn-sm.download:hover{transform:translateY(-1px);box-shadow:var(--glow-green)}
+    .btn-sm.cancel{background:transparent;color:var(--neon-pink);border-color:rgba(255,45,120,0.3)}
+    .btn-sm.cancel:hover{background:rgba(255,45,120,0.1)}
+    .audio-preview{margin-top:10px}
+    .audio-preview audio{width:100%;height:40px;border-radius:8px;accent-color:var(--neon-cyan)}
+
+    /* OPTIONS PANEL */
+    .options-panel{margin-top:28px;padding-top:28px;border-top:1px solid var(--border)}
+    .options-title{font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:20px}
+    .options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+    .option-group label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+    .select-wrapper{position:relative}
+    .select-wrapper::after{content:'▾';position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--neon-cyan);pointer-events:none;font-size:14px}
+    select{width:100%;padding:11px 40px 11px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-family:var(--font-main);font-size:14px;font-weight:500;appearance:none;cursor:pointer;transition:all var(--transition);outline:none}
+    select:hover,select:focus{border-color:var(--neon-cyan);box-shadow:0 0 0 3px rgba(0,245,255,0.1)}
+    [data-theme="light"] select option{background:#ffffff;color:#0a0a1f}
+
+    /* CONVERT BUTTON */
+    .convert-btn{width:100%;padding:16px;border-radius:var(--radius);border:none;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple));color:#000;font-family:var(--font-display);font-size:17px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;transition:all var(--transition);letter-spacing:0.5px}
+    .convert-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important}
+    .convert-btn:not(:disabled):hover{transform:translateY(-2px);box-shadow:var(--glow-cyan)}
+    .convert-btn:not(:disabled):active{transform:translateY(0)}
+    .convert-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.2) 50%,transparent 100%);transform:translateX(-100%);transition:transform 0.6s ease}
+    .convert-btn:not(:disabled):hover::before{transform:translateX(100%)}
+    .convert-btn-inner{display:flex;align-items:center;justify-content:center;gap:10px}
+
+    /* HISTORY */
+    .history-section{margin-bottom:44px;animation:fadeInUp 0.6s 0.6s ease both}
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .section-title{font-family:var(--font-display);font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px}
+    .section-title-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--neon-pink),var(--neon-purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+    .section-toggle{background:var(--bg-card);border:1px solid var(--border);color:var(--text-muted);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all var(--transition);display:flex;align-items:center;gap:6px}
+    .section-toggle:hover{border-color:var(--neon-pink);color:var(--neon-pink)}
+    .history-chevron{transition:transform var(--transition);display:inline-block}
+    .history-list{display:flex;flex-direction:column;gap:10px;overflow:hidden;transition:max-height 0.4s ease,opacity 0.4s ease;max-height:9000px;opacity:1}
+    .history-list.collapsed{max-height:0!important;opacity:0}
+    .history-item{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;gap:14px;transition:all var(--transition);animation:slideIn 0.3s ease both}
+    .history-item:hover{border-color:var(--border-hover);transform:translateX(4px)}
+    .history-format-badge{width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;letter-spacing:0.5px;flex-shrink:0}
+    .hfmt-mp3{background:rgba(0,245,255,0.15);color:var(--neon-cyan)}
+    .hfmt-aac{background:rgba(191,0,255,0.15);color:var(--neon-purple)}
+    .hfmt-wav{background:rgba(0,255,136,0.15);color:var(--neon-green)}
+    .hfmt-ogg{background:rgba(255,230,0,0.15);color:var(--neon-yellow)}
+    .hfmt-flac{background:rgba(255,107,0,0.15);color:var(--neon-orange)}
+    .hfmt-m4a{background:rgba(255,45,120,0.15);color:var(--neon-pink)}
+    .history-meta{flex:1;min-width:0}
+    .history-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+    .history-details{font-size:12px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap}
+    .history-download{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:rgba(0,255,136,0.1);color:var(--neon-green);border:1px solid rgba(0,255,136,0.2);font-size:12px;font-weight:600;text-decoration:none;transition:all var(--transition);white-space:nowrap}
+    .history-download:hover{background:rgba(0,255,136,0.2);box-shadow:var(--glow-green)}
+    .history-empty{text-align:center;padding:48px 24px;color:var(--text-dim);font-size:14px}
+    .history-empty-icon{font-size:48px;display:block;margin-bottom:12px;opacity:0.4}
+    .clear-btn{background:none;border:1px solid rgba(255,45,120,0.3);color:var(--neon-pink);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all var(--transition)}
+    .clear-btn:hover{background:rgba(255,45,120,0.1)}
+
+    /* TOASTS */
+    .toast-container{position:fixed;top:80px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+    .toast{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:var(--radius-sm);border:1px solid;min-width:280px;max-width:380px;backdrop-filter:blur(20px);animation:toastIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;pointer-events:auto;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+    @keyframes toastIn{from{opacity:0;transform:translateX(100px) scale(0.8)}to{opacity:1;transform:translateX(0) scale(1)}}
+    .toast.out{animation:toastOut 0.3s ease forwards}
+    @keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(100px)}}
+    .toast.success{background:rgba(0,255,136,0.1);border-color:rgba(0,255,136,0.3)}
+    .toast.error{background:rgba(255,45,120,0.1);border-color:rgba(255,45,120,0.3)}
+    .toast.info{background:rgba(0,245,255,0.1);border-color:rgba(0,245,255,0.3)}
+    .toast.warning{background:rgba(255,230,0,0.1);border-color:rgba(255,230,0,0.3)}
+    .toast-icon{font-size:20px;flex-shrink:0}
+    .toast-body{flex:1}
+    .toast-title{font-weight:700;font-size:13px;margin-bottom:2px}
+    .toast-msg{font-size:12px;color:var(--text-muted)}
+    .toast-close{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:16px;padding:2px;flex-shrink:0;transition:color var(--transition)}
+    .toast-close:hover{color:var(--text-primary)}
+
+    /* FEATURES */
+    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:48px;animation:fadeInUp 0.6s 0.7s ease both}
+    .feature-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;transition:all var(--transition)}
+    .feature-card:hover{border-color:var(--border-hover);transform:translateY(-4px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+    .feature-icon{font-size:32px;margin-bottom:10px;display:block}
+    .feature-title{font-size:14px;font-weight:700;margin-bottom:6px}
+    .feature-desc{font-size:12px;color:var(--text-muted);line-height:1.5}
+
+    /* FOOTER */
+    footer{border-top:1px solid var(--border);padding:32px 0;text-align:center;color:var(--text-dim);font-size:13px}
+    footer a{color:var(--neon-cyan);text-decoration:none}
+    footer a:hover{text-decoration:underline}
+
+    /* UTILS */
+    .hidden{display:none!important}
+    @keyframes fadeInDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.1)}100%{transform:scale(1)}}
+
+    /* TABS */
+    .tabs{display:flex;gap:4px;background:var(--bg-card2);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:24px}
+    .tab-btn{flex:1;padding:10px 16px;border:none;border-radius:9px;font-family:var(--font-main);font-size:13px;font-weight:600;cursor:pointer;transition:all var(--transition);background:transparent;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:8px}
+    .tab-btn:hover{color:var(--text-primary)}
+    .tab-btn.active{background:linear-gradient(135deg,var(--neon-cyan),var(--neon-purple));color:#000;box-shadow:0 2px 12px rgba(0,245,255,0.3)}
+    .tab-pane{display:none}
+    .tab-pane.active{display:block}
+
+    /* URL INPUT */
+    .url-section{margin-bottom:24px}
+    .url-input-wrap{position:relative;display:flex;gap:10px;align-items:stretch}
+    .url-input{flex:1;padding:14px 20px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-family:var(--font-main);font-size:15px;outline:none;transition:all var(--transition)}
+    .url-input:focus,.url-input:hover{border-color:var(--neon-cyan);box-shadow:0 0 0 3px rgba(0,245,255,0.1)}
+    .url-input::placeholder{color:var(--text-dim)}
+    .url-fetch-btn{padding:0 20px;border-radius:var(--radius-sm);border:1px solid rgba(0,245,255,0.3);background:rgba(0,245,255,0.07);color:var(--neon-cyan);font-weight:700;font-size:13px;cursor:pointer;transition:all var(--transition);white-space:nowrap;display:flex;align-items:center;gap:6px}
+    .url-fetch-btn:hover{background:rgba(0,245,255,0.15);box-shadow:var(--glow-cyan)}
+    .url-fetch-btn:disabled{opacity:0.4;cursor:not-allowed}
+
+    /* URL platforms hint */
+    .url-platforms{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+    .url-platforms-label{font-size:12px;color:var(--text-dim)}
+    .platform-chip{font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid var(--border);color:var(--text-muted);background:rgba(255,255,255,0.03);display:flex;align-items:center;gap:5px}
+    .platform-chip.yt{border-color:rgba(255,0,0,0.3);color:#ff4444;background:rgba(255,0,0,0.05)}
+
+    /* URL info card */
+    .url-info-card{background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-top:16px;display:flex;gap:16px;align-items:center;animation:slideIn 0.3s ease both}
+    .url-thumb{width:80px;height:56px;border-radius:8px;object-fit:cover;background:var(--bg-input);flex-shrink:0}
+    .url-thumb-placeholder{width:80px;height:56px;border-radius:8px;background:linear-gradient(135deg,rgba(0,245,255,0.1),rgba(191,0,255,0.1));display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+    .url-info-meta{flex:1;min-width:0}
+    .url-info-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+    .url-info-sub{font-size:12px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap}
+    .url-platform-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px}
+    .upb-youtube{background:rgba(255,0,0,0.15);color:#ff4444}
+    .upb-generic{background:rgba(0,245,255,0.1);color:var(--neon-cyan)}
+
+    /* URL job items */
+    .url-job-item{background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-top:12px;animation:slideIn 0.3s ease both;transition:border-color var(--transition)}
+    .url-job-item:hover{border-color:var(--border-hover)}
+    .url-job-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+    .url-job-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,rgba(255,45,120,0.1),rgba(191,0,255,0.1));flex-shrink:0}
+    .url-job-title{font-size:14px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    /* RESPONSIVE */
+    @media(max-width:640px){
+      .converter-card{padding:20px}
+      .drop-zone{padding:32px 16px}
+      .options-grid{grid-template-columns:1fr}
+      .stats-bar{grid-template-columns:1fr}
+      .features-grid{grid-template-columns:1fr 1fr}
+      .toast-container{right:12px;left:12px}
+      .toast{min-width:unset}
+      .file-item{grid-template-columns:auto 1fr auto}
+      .section-header{flex-wrap:wrap;gap:8px}
+    }
+    @media(max-width:400px){.features-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div id="app">
+
+    <!-- HEADER -->
+    <header>
+      <div class="container">
+        <div class="header-inner">
+          <a href="#" class="logo" onclick="return false">
+            <div class="logo-icon">🎵</div>
+            <div>
+              <div class="logo-text">SoundRip</div>
+              <div class="logo-tagline">Video to Audio Converter</div>
+            </div>
+          </a>
+          <div class="header-actions">
+            <span class="badge">FREE</span>
+            <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle dark/light mode">🌙</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-eyebrow">Powered by FFmpeg</div>
+        <h1 class="hero-title">Extract Audio from<br><span class="gradient-text">Any Video File</span></h1>
+        <p class="hero-sub">Convert MP4, MKV, AVI, MOV, WEBM &amp; more to high-quality MP3, AAC, WAV — fast and free.</p>
+        <div class="hero-formats">
+          <span class="format-chip input">MP4</span>
+          <span class="format-chip input">MKV</span>
+          <span class="format-chip input">AVI</span>
+          <span class="format-chip input">MOV</span>
+          <span class="format-chip input">WEBM</span>
+          <span class="format-chip input">FLV</span>
+          <span class="format-chip arrow">→</span>
+          <span class="format-chip output">MP3</span>
+          <span class="format-chip output">AAC</span>
+          <span class="format-chip output">WAV</span>
+          <span class="format-chip output">OGG</span>
+          <span class="format-chip output">FLAC</span>
+          <span class="format-chip output">M4A</span>
+        </div>
+      </section>
+
+      <!-- STATS -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <span class="stat-value" id="statTotal">0</span>
+          <div class="stat-label">Total Conversions</div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">6</span>
+          <div class="stat-label">Output Formats</div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value">500MB</span>
+          <div class="stat-label">Max File Size</div>
+        </div>
+      </div>
+
+      <!-- CONVERTER CARD -->
+      <div class="converter-card">
+
+        <!-- TABS -->
+        <div class="tabs">
+          <button class="tab-btn active" id="tabFile" onclick="switchTab('file')">
+            🎬 File Upload
+          </button>
+          <button class="tab-btn" id="tabUrl" onclick="switchTab('url')">
+            🔗 URL / YouTube
+          </button>
+        </div>
+
+        <!-- ── FILE TAB ── -->
+        <div class="tab-pane active" id="paneFile">
+
+          <!-- Drop Zone -->
+          <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Drop video files here or click to browse">
+            <span class="drop-icon" id="dropIcon">🎬</span>
+            <div class="drop-title">Drop your video files here</div>
+            <div class="drop-subtitle">or click to browse from your computer</div>
+            <button class="drop-btn" onclick="document.getElementById('fileInput').click()" type="button">
+              <span>📁</span> Browse Files
+            </button>
+            <div class="drop-formats">MP4 · MKV · AVI · MOV · WEBM · FLV · MPEG · M4V · 3GP — Max 500MB per file</div>
+          </div>
+          <input type="file" id="fileInput" multiple accept="video/*,.mkv,.flv,.avi,.mov,.webm,.mp4,.mpeg,.m4v,.3gp" />
+
+          <!-- File Queue -->
+          <div class="file-queue" id="fileQueue"></div>
+
+          <!-- Options -->
+          <div class="options-panel" id="optionsPanel" style="display:none">
+            <div class="options-title">⚙️ Output Settings</div>
+            <div class="options-grid">
+              <div class="option-group">
+                <label for="outputFormat">Output Format</label>
+                <div class="select-wrapper">
+                  <select id="outputFormat">
+                    <option value="mp3">MP3 — Most Compatible</option>
+                    <option value="aac">AAC — Apple Devices</option>
+                    <option value="wav">WAV — Lossless Quality</option>
+                    <option value="ogg">OGG — Open Source</option>
+                    <option value="flac">FLAC — Lossless Compressed</option>
+                    <option value="m4a">M4A — iTunes / iPhone</option>
+                  </select>
+                </div>
+              </div>
+              <div class="option-group" id="bitrateGroup">
+                <label for="outputBitrate">Audio Quality</label>
+                <div class="select-wrapper">
+                  <select id="outputBitrate">
+                    <option value="128">128 kbps — Standard</option>
+                    <option value="192" selected>192 kbps — High Quality</option>
+                    <option value="256">256 kbps — Very High</option>
+                    <option value="320">320 kbps — Maximum</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <button class="convert-btn" id="convertBtn" disabled>
+              <div class="convert-btn-inner">
+                <span>⚡</span>
+                <span id="convertBtnText">Convert Files</span>
+              </div>
+            </button>
+          </div>
+        </div><!-- /paneFile -->
+
+        <!-- ── URL TAB ── -->
+        <div class="tab-pane" id="paneUrl">
+
+          <div class="url-section">
+            <div class="url-input-wrap">
+              <input
+                type="url"
+                class="url-input"
+                id="urlInput"
+                placeholder="Paste YouTube, TikTok, Twitter, SoundCloud URL…"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button class="url-fetch-btn" id="urlFetchBtn" onclick="fetchUrlInfo()">
+                🔍 Fetch
+              </button>
+            </div>
+            <div class="url-platforms">
+              <span class="url-platforms-label">Supported:</span>
+              <span class="platform-chip yt">▶ YouTube</span>
+              <span class="platform-chip">🎵 SoundCloud</span>
+              <span class="platform-chip">🎬 Direct MP4 links</span>
+              <span class="platform-chip">🌐 Any video URL</span>
+            </div>
+          </div>
+
+          <!-- URL Info Card (shown after fetch) -->
+          <div id="urlInfoCard" style="display:none"></div>
+
+          <!-- URL Options -->
+          <div class="options-panel" id="urlOptionsPanel" style="display:none">
+            <div class="options-title">⚙️ Output Settings</div>
+            <div class="options-grid">
+              <div class="option-group">
+                <label for="urlOutputFormat">Output Format</label>
+                <div class="select-wrapper">
+                  <select id="urlOutputFormat">
+                    <option value="mp3">MP3 — Most Compatible</option>
+                    <option value="aac">AAC — Apple Devices</option>
+                    <option value="wav">WAV — Lossless Quality</option>
+                    <option value="ogg">OGG — Open Source</option>
+                    <option value="flac">FLAC — Lossless Compressed</option>
+                    <option value="m4a">M4A — iTunes / iPhone</option>
+                  </select>
+                </div>
+              </div>
+              <div class="option-group" id="urlBitrateGroup">
+                <label for="urlOutputBitrate">Audio Quality</label>
+                <div class="select-wrapper">
+                  <select id="urlOutputBitrate">
+                    <option value="128">128 kbps — Standard</option>
+                    <option value="192" selected>192 kbps — High Quality</option>
+                    <option value="256">256 kbps — Very High</option>
+                    <option value="320">320 kbps — Maximum</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <button class="convert-btn" id="urlConvertBtn" onclick="convertUrl()">
+              <div class="convert-btn-inner">
+                <span>⚡</span>
+                <span id="urlConvertBtnText">Convert URL</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- URL Job List -->
+          <div id="urlJobList"></div>
+
+        </div><!-- /paneUrl -->
+
+      </div>
+
+      <!-- HISTORY -->
+      <section class="history-section" id="historySection">
+        <div class="section-header">
+          <div class="section-title">
+            <div class="section-title-icon">🕓</div>
+            Conversion History
+            <span style="font-size:13px;color:var(--text-muted);font-weight:400" id="historyCount"></span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="clear-btn" id="clearHistoryBtn">🗑 Clear All</button>
+            <button class="section-toggle" id="historyToggleBtn">
+              <span id="historyChevron" class="history-chevron">▾</span>
+              <span id="historyToggleText">Collapse</span>
+            </button>
+          </div>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </section>
+
+      <!-- FEATURES -->
+      <div class="features-grid">
+        <div class="feature-card"><span class="feature-icon">⚡</span><div class="feature-title">Lightning Fast</div><div class="feature-desc">FFmpeg-powered engine extracts audio at maximum speed</div></div>
+        <div class="feature-card"><span class="feature-icon">🎯</span><div class="feature-title">High Quality</div><div class="feature-desc">Up to 320 kbps MP3 or lossless WAV/FLAC output</div></div>
+        <div class="feature-card"><span class="feature-icon">📦</span><div class="feature-title">Batch Convert</div><div class="feature-desc">Drop multiple files and convert them all at once</div></div>
+        <div class="feature-card"><span class="feature-icon">🔒</span><div class="feature-title">Private &amp; Secure</div><div class="feature-desc">Files deleted automatically after 1 hour</div></div>
+      </div>
+
+    </div><!-- /container -->
+
+    <footer>
+      <div class="container">
+        <p>🎵 <strong>SoundRip</strong> — Professional Video to Audio Converter</p>
+        <p style="margin-top:6px">Powered by <a href="https://ffmpeg.org" target="_blank" rel="noopener">FFmpeg</a> · Files auto-deleted after 1 hour</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+  'use strict';
+
+  /* ─── Constants ─────────────────────────────────────────────────────── */
+  const ALLOWED_EXTS = new Set(['mp4','mkv','avi','mov','webm','flv','mpeg','mpg','m4v','3gp','ogv']);
+  const EXT_ICONS = { mp4:'🎬', mkv:'📽️', avi:'🎞️', mov:'🎥', webm:'🌐', flv:'📹', default:'🎦' };
+  const FMT_LABELS = { mp3:'MP3', aac:'AAC', wav:'WAV', ogg:'OGG', flac:'FLAC', m4a:'M4A' };
+
+  /* ─── State ──────────────────────────────────────────────────────────── */
+  let files = [];      // { id, file, status, jobId, downloadUrl, origName }
+  let converting = false;
+
+  /* ─── DOM ────────────────────────────────────────────────────────────── */
+  const dropZone       = document.getElementById('dropZone');
+  const fileInputEl    = document.getElementById('fileInput');
+  const fileQueueEl    = document.getElementById('fileQueue');
+  const optionsPanel   = document.getElementById('optionsPanel');
+  const convertBtn     = document.getElementById('convertBtn');
+  const convertBtnText = document.getElementById('convertBtnText');
+  const outputFormat   = document.getElementById('outputFormat');
+  const outputBitrate  = document.getElementById('outputBitrate');
+  const bitrateGroup   = document.getElementById('bitrateGroup');
+  const historyList    = document.getElementById('historyList');
+  const historyCount   = document.getElementById('historyCount');
+  const statTotal      = document.getElementById('statTotal');
+  const themeToggle    = document.getElementById('themeToggle');
+  const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+  const historyToggleBtn = document.getElementById('historyToggleBtn');
+  const historyChevron = document.getElementById('historyChevron');
+  const historyToggleText = document.getElementById('historyToggleText');
+
+  /* ─── Theme ─────────────────────────────────────────────────────────── */
+  const savedTheme = localStorage.getItem('sr-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+  themeToggle.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+    localStorage.setItem('sr-theme', next);
+    showToast('info', '🎨 Theme Changed', `Switched to ${next} mode`);
+  });
+
+  /* ─── Format/bitrate ────────────────────────────────────────────────── */
+  outputFormat.addEventListener('change', () => {
+    const lossless = ['wav','flac'];
+    const isLossless = lossless.includes(outputFormat.value);
+    bitrateGroup.style.opacity = isLossless ? '0.35' : '1';
+    bitrateGroup.style.pointerEvents = isLossless ? 'none' : 'auto';
+  });
+
+  /* ─── Drag & Drop ───────────────────────────────────────────────────── */
+  document.addEventListener('dragover', e => e.preventDefault());
+  document.addEventListener('drop',     e => e.preventDefault());
+
+  ['dragenter','dragover'].forEach(evt =>
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('drag-over'); })
+  );
+  ['dragleave','drop'].forEach(evt =>
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('drag-over'); })
+  );
+  dropZone.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+  dropZone.addEventListener('click', () => { if (!converting) fileInputEl.click(); });
+  dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInputEl.click(); });
+  fileInputEl.addEventListener('change', () => { addFiles(fileInputEl.files); fileInputEl.value = ''; });
+
+  /* ─── Add files ──────────────────────────────────────────────────────── */
+  function addFiles(fileList) {
+    let added = 0;
+    Array.from(fileList).forEach(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      if (!ALLOWED_EXTS.has(ext)) {
+        showToast('warning', '⚠️ Unsupported File', `${f.name} is not a supported video format`);
+        return;
+      }
+      if (f.size > 500 * 1024 * 1024) {
+        showToast('warning', '⚠️ File Too Large', `${f.name} exceeds 500MB limit`);
+        return;
+      }
+      const id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+      files.push({ id, file: f, status: 'pending', jobId: null, downloadUrl: null, origName: f.name.replace(/\.[^.]+$/, '') });
+      added++;
+    });
+    if (added) {
+      renderQueue();
+      optionsPanel.style.display = 'block';
+      updateConvertBtn();
+      showToast('info', '📁 Files Added', `${added} file${added > 1 ? 's' : ''} ready to convert`);
+    }
+  }
+
+  /* ─── Format file size ───────────────────────────────────────────────── */
+  function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  /* ─── Render queue ───────────────────────────────────────────────────── */
+  function renderQueue() {
+    fileQueueEl.innerHTML = '';
+    files.forEach(item => {
+      const ext = item.file.name.split('.').pop().toLowerCase();
+      const icon = EXT_ICONS[ext] || EXT_ICONS.default;
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.id = `fi-${item.id}`;
+
+      const canRemove = item.status === 'pending';
+      div.innerHTML = `
+        <div class="file-icon" style="background:rgba(0,245,255,0.08)">${icon}</div>
+        <div class="file-meta">
+          <div class="file-name">${escHtml(item.file.name)}</div>
+          <div class="file-details">
+            <span class="file-detail-chip">${ext.toUpperCase()}</span>
+            <span class="file-detail-chip">${fmtSize(item.file.size)}</span>
+          </div>
+          <div class="file-status-bar" id="fsb-${item.id}">
+            <span class="status-badge pending">⏳ Pending</span>
+          </div>
+        </div>
+        <button class="file-remove" data-id="${item.id}" title="Remove" ${canRemove ? '' : 'disabled style="opacity:0.3"'}>✕</button>
+      `;
+      fileQueueEl.appendChild(div);
+    });
+
+    // Remove listeners
+    fileQueueEl.querySelectorAll('.file-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        files = files.filter(f => f.id !== id);
+        renderQueue();
+        if (!files.length) {
+          optionsPanel.style.display = 'none';
+        }
+        updateConvertBtn();
+      });
+    });
+  }
+
+  /* ─── Update convert button ──────────────────────────────────────────── */
+  function updateConvertBtn() {
+    const pendingCount = files.filter(f => f.status === 'pending').length;
+    convertBtn.disabled = pendingCount === 0 || converting;
+    convertBtnText.textContent = pendingCount > 1
+      ? `Convert ${pendingCount} Files`
+      : 'Convert File';
+  }
+
+  /* ─── Update file status UI ──────────────────────────────────────────── */
+  function updateFileStatus(id, html) {
+    const el = document.getElementById(`fsb-${id}`);
+    if (el) el.innerHTML = html;
+  }
+
+  /* ─── Convert button click ───────────────────────────────────────────── */
+  convertBtn.addEventListener('click', async () => {
+    if (converting) return;
+    const pending = files.filter(f => f.status === 'pending');
+    if (!pending.length) return;
+
+    converting = true;
+    updateConvertBtn();
+    convertBtnText.textContent = 'Converting…';
+
+    for (const item of pending) {
+      await convertFile(item);
+    }
+
+    converting = false;
+    updateConvertBtn();
+  });
+
+  /* ─── Convert single file ─────────────────────────────────────────────── */
+  async function convertFile(item) {
+    const fmt     = outputFormat.value;
+    const bitrate = outputBitrate.value;
+
+    item.status = 'uploading';
+    updateFileStatus(item.id, `<span class="status-badge converting"><span class="spinner"></span> Uploading…</span>`);
+
+    const formData = new FormData();
+    formData.append('video',   item.file);
+    formData.append('format',  fmt);
+    formData.append('bitrate', bitrate);
+
+    let jobId;
+    try {
+      const res = await fetch('/convert', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error(err.error || 'Upload failed');
+      }
+      const data = await res.json();
+      jobId = data.jobId;
+    } catch (err) {
+      item.status = 'error';
+      updateFileStatus(item.id, `<span class="status-badge error">❌ ${escHtml(err.message)}</span>`);
+      showToast('error', '❌ Upload Failed', err.message);
+      return;
+    }
+
+    item.jobId  = jobId;
+    item.status = 'converting';
+    updateFileStatus(item.id, `
+      <div class="progress-track"><div class="progress-fill" id="pf-${item.id}" style="width:0%"></div></div>
+      <div class="progress-info">
+        <span class="status-badge converting"><span class="spinner"></span> Converting…</span>
+        <span id="pct-${item.id}">0%</span>
+      </div>
+    `);
+
+    // SSE
+    await new Promise(resolve => {
+      const sse = new EventSource(`/progress/${jobId}`);
+
+      sse.addEventListener('progress', e => {
+        const d = JSON.parse(e.data);
+        const pct = Math.min(d.percent || 0, 99);
+        const fill = document.getElementById(`pf-${item.id}`);
+        const pctEl = document.getElementById(`pct-${item.id}`);
+        if (fill)  fill.style.width = pct + '%';
+        if (pctEl) pctEl.textContent = pct + '%' + (d.currentKbps ? ` · ${Math.round(d.currentKbps)} kbps` : '');
+      });
+
+      sse.addEventListener('done', e => {
+        sse.close();
+        const d = JSON.parse(e.data);
+        item.status      = 'done';
+        item.downloadUrl = d.downloadUrl;
+        item.outputName  = d.filename;
+
+        const fill = document.getElementById(`pf-${item.id}`);
+        if (fill) { fill.style.width = '100%'; fill.classList.add('done'); }
+
+        updateFileStatus(item.id, `
+          <div class="progress-track"><div class="progress-fill done" style="width:100%"></div></div>
+          <div class="progress-info" style="margin-bottom:8px">
+            <span class="status-badge done">✅ Done</span>
+            <span>100%</span>
+          </div>
+          <div class="file-actions">
+            <a class="btn-sm download" href="${d.downloadUrl}" download="${escAttr(d.filename)}">⬇️ Download ${FMT_LABELS[fmt] || fmt.toUpperCase()}</a>
+            <button class="btn-sm cancel" onclick="reuseFile('${item.id}')">🔄 Convert Again</button>
+          </div>
+          <div class="audio-preview" style="margin-top:10px">
+            <audio controls preload="none" src="${d.downloadUrl}" style="width:100%;height:40px;border-radius:8px;accent-color:var(--neon-cyan)"></audio>
+          </div>
+        `);
+
+        saveToHistory({ origName: item.origName, format: fmt, bitrate, downloadUrl: d.downloadUrl, filename: d.filename });
+        showToast('success', '✅ Conversion Done', `${item.file.name} → ${d.filename}`);
+        resolve();
+      });
+
+      sse.addEventListener('error', e => {
+        sse.close();
+        let msg = 'Conversion failed';
+        try { msg = JSON.parse(e.data).message; } catch(_) {}
+        item.status = 'error';
+        updateFileStatus(item.id, `<span class="status-badge error">❌ ${escHtml(msg)}</span>`);
+        showToast('error', '❌ Conversion Failed', msg);
+        resolve();
+      });
+
+      sse.addEventListener('cancelled', () => {
+        sse.close();
+        item.status = 'cancelled';
+        updateFileStatus(item.id, `<span class="status-badge cancelled">⛔ Cancelled</span>`);
+        resolve();
+      });
+
+      sse.onerror = () => {
+        if (item.status !== 'done' && item.status !== 'error' && item.status !== 'cancelled') {
+          sse.close();
+          item.status = 'error';
+          updateFileStatus(item.id, `<span class="status-badge error">❌ Connection lost</span>`);
+          showToast('error', '❌ Connection Lost', 'Check if the server is running');
+          resolve();
+        }
+      };
+    });
+  }
+
+  /* ─── Reuse / convert again ──────────────────────────────────────────── */
+  window.reuseFile = function(id) {
+    const item = files.find(f => f.id === id);
+    if (!item) return;
+    item.status = 'pending';
+    item.jobId = null;
+    item.downloadUrl = null;
+    renderQueue();
+    updateConvertBtn();
+  };
+
+  /* ─── History ────────────────────────────────────────────────────────── */
+  let history = JSON.parse(localStorage.getItem('sr-history') || '[]');
+  let historyCollapsed = localStorage.getItem('sr-hist-collapsed') === 'true';
+
+  function saveToHistory(entry) {
+    entry.date = Date.now();
+    history.unshift(entry);
+    if (history.length > 50) history = history.slice(0, 50);
+    localStorage.setItem('sr-history', JSON.stringify(history));
+    updateStatTotal();
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const count = history.length;
+    historyCount.textContent = count ? `(${count})` : '';
+    clearHistoryBtn.style.display = count ? '' : 'none';
+
+    if (historyCollapsed) {
+      historyList.classList.add('collapsed');
+      historyChevron.style.transform = 'rotate(-90deg)';
+      historyToggleText.textContent = 'Expand';
+    } else {
+      historyList.classList.remove('collapsed');
+      historyChevron.style.transform = '';
+      historyToggleText.textContent = 'Collapse';
+    }
+
+    if (!count) {
+      historyList.innerHTML = `<div class="history-empty"><span class="history-empty-icon">🎵</span>No conversions yet. Convert a file to see it here.</div>`;
+      return;
+    }
+
+    historyList.innerHTML = history.map((h, i) => {
+      const date = new Date(h.date);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const fmt = h.format || 'mp3';
+      return `
+        <div class="history-item" style="animation-delay:${i * 0.04}s">
+          <div class="history-format-badge hfmt-${fmt}">${fmt.toUpperCase()}</div>
+          <div class="history-meta">
+            <div class="history-name">${escHtml(h.origName || h.filename || 'Untitled')}</div>
+            <div class="history-details">
+              <span>${fmt.toUpperCase()} ${['wav','flac'].includes(fmt) ? 'Lossless' : h.bitrate + ' kbps'}</span>
+              <span>${dateStr} ${timeStr}</span>
+            </div>
+          </div>
+          <a class="history-download" href="${h.downloadUrl}" download="${escAttr(h.filename || 'audio.' + fmt)}">⬇️ Download</a>
+        </div>
+      `;
+    }).join('');
+  }
+
+  historyToggleBtn.addEventListener('click', () => {
+    historyCollapsed = !historyCollapsed;
+    localStorage.setItem('sr-hist-collapsed', historyCollapsed);
+    renderHistory();
+  });
+
+  clearHistoryBtn.addEventListener('click', () => {
+    if (!history.length) return;
+    history = [];
+    localStorage.removeItem('sr-history');
+    renderHistory();
+    showToast('info', '🗑 History Cleared', 'All conversion history has been removed');
+  });
+
+  /* ─── Stats ──────────────────────────────────────────────────────────── */
+  function updateStatTotal() {
+    statTotal.textContent = history.length;
+  }
+
+  /* ─── Toast ──────────────────────────────────────────────────────────── */
+  const toastContainer = document.getElementById('toastContainer');
+
+  function showToast(type, title, msg, duration = 4000) {
+    const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <span class="toast-icon">${icons[type] || 'ℹ️'}</span>
+      <div class="toast-body">
+        <div class="toast-title">${escHtml(title)}</div>
+        <div class="toast-msg">${escHtml(msg)}</div>
+      </div>
+      <button class="toast-close" aria-label="Dismiss">✕</button>
+    `;
+    toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
+    toastContainer.appendChild(toast);
+    setTimeout(() => dismissToast(toast), duration);
+  }
+
+  function dismissToast(toast) {
+    if (toast.classList.contains('out')) return;
+    toast.classList.add('out');
+    setTimeout(() => toast.remove(), 350);
+  }
+
+  /* ─── Escape helpers ────────────────────────────────────────────────── */
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function escAttr(str) { return escHtml(str); }
+
+  /* ─── Init ───────────────────────────────────────────────────────────── */
+  updateStatTotal();
+  renderHistory();
+
+  // Greet on load
+  setTimeout(() => showToast('info', '👋 Welcome to SoundRip', 'Drop or select a video file to get started!', 5000), 800);
+
+  /* ─── Tab switching ──────────────────────────────────────────────────── */
+  window.switchTab = function(tab) {
+    document.getElementById('tabFile').classList.toggle('active', tab === 'file');
+    document.getElementById('tabUrl').classList.toggle('active',  tab === 'url');
+    document.getElementById('paneFile').classList.toggle('active', tab === 'file');
+    document.getElementById('paneUrl').classList.toggle('active',  tab === 'url');
+  };
+
+  /* ─── URL format/bitrate toggle ─────────────────────────────────────── */
+  document.getElementById('urlOutputFormat').addEventListener('change', () => {
+    const lossless = ['wav','flac'];
+    const isLossless = lossless.includes(document.getElementById('urlOutputFormat').value);
+    const bg = document.getElementById('urlBitrateGroup');
+    bg.style.opacity = isLossless ? '0.35' : '1';
+    bg.style.pointerEvents = isLossless ? 'none' : 'auto';
+  });
+
+  /* ─── URL fetch ──────────────────────────────────────────────────────── */
+  let currentUrlInfo = null;
+
+  document.getElementById('urlInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') fetchUrlInfo();
+  });
+
+  window.fetchUrlInfo = async function() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url) { showToast('warning', '⚠️ No URL', 'Please paste a video URL first'); return; }
+
+    const fetchBtn = document.getElementById('urlFetchBtn');
+    const infoCard = document.getElementById('urlInfoCard');
+    const optPanel = document.getElementById('urlOptionsPanel');
+
+    fetchBtn.disabled = true;
+    fetchBtn.textContent = '⏳ Fetching…';
+    infoCard.style.display = 'none';
+    optPanel.style.display = 'none';
+    currentUrlInfo = null;
+
+    try {
+      const res = await fetch('/url-info?' + new URLSearchParams({ url }));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch URL info');
+
+      currentUrlInfo = { ...data, url };
+
+      const isYT = data.platform === 'youtube';
+      infoCard.innerHTML = `
+        <div class="url-info-card">
+          ${data.thumbnail
+            ? `<img class="url-thumb" src="${escAttr(data.thumbnail)}" alt="thumbnail" onerror="this.style.display='none'" />`
+            : `<div class="url-thumb-placeholder">${isYT ? '▶' : '🌐'}</div>`
+          }
+          <div class="url-info-meta">
+            <div class="url-info-title">${escHtml(data.title)}</div>
+            <div class="url-info-sub">
+              <span class="url-platform-badge ${isYT ? 'upb-youtube' : 'upb-generic'}">${isYT ? '▶ YouTube' : '🌐 Web'}</span>
+              ${data.author   ? `<span>👤 ${escHtml(data.author)}</span>` : ''}
+              ${data.duration ? `<span>⏱ ${escHtml(data.duration)}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+      infoCard.style.display = 'block';
+      optPanel.style.display = 'block';
+      showToast('success', '✅ URL Ready', `${data.title || data.platform} — ready to convert`);
+    } catch (err) {
+      showToast('error', '❌ Fetch Failed', err.message);
+      infoCard.style.display = 'none';
+    } finally {
+      fetchBtn.disabled = false;
+      fetchBtn.innerHTML = '🔍 Fetch';
+    }
+  };
+
+  /* ─── URL Convert ────────────────────────────────────────────────────── */
+  let urlConverting = false;
+
+  window.convertUrl = async function() {
+    const url = document.getElementById('urlInput').value.trim();
+    if (!url || urlConverting) return;
+
+    const fmt     = document.getElementById('urlOutputFormat').value;
+    const bitrate = document.getElementById('urlOutputBitrate').value;
+    const btn     = document.getElementById('urlConvertBtn');
+    const btnText = document.getElementById('urlConvertBtnText');
+
+    urlConverting = true;
+    btn.disabled  = true;
+    btnText.textContent = 'Converting…';
+
+    // Create job UI item
+    const jobElId = 'urljob-' + Date.now();
+    const title   = currentUrlInfo?.title || url;
+    const jobList = document.getElementById('urlJobList');
+
+    const jobEl = document.createElement('div');
+    jobEl.className = 'url-job-item';
+    jobEl.id = jobElId;
+    jobEl.innerHTML = `
+      <div class="url-job-header">
+        <div class="url-job-icon">🔗</div>
+        <div class="url-job-title">${escHtml(title)}</div>
+        <span class="status-badge converting" id="${jobElId}-badge"><span class="spinner"></span> Starting…</span>
+      </div>
+      <div class="file-status-bar" id="${jobElId}-status">
+        <div class="progress-track"><div class="progress-fill" id="${jobElId}-fill" style="width:0%"></div></div>
+        <div class="progress-info"><span></span><span id="${jobElId}-pct">0%</span></div>
+      </div>
+    `;
+    jobList.prepend(jobEl);
+
+    try {
+      const res = await fetch('/convert-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, format: fmt, bitrate })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Request failed');
+
+      const { jobId } = data;
+
+      // SSE progress
+      await new Promise(resolve => {
+        const sse = new EventSource(`/progress/${jobId}`);
+
+        sse.addEventListener('progress', e => {
+          const d   = JSON.parse(e.data);
+          const pct = Math.min(d.percent || 0, 99);
+          const fill = document.getElementById(`${jobElId}-fill`);
+          const pctEl = document.getElementById(`${jobElId}-pct`);
+          const badge = document.getElementById(`${jobElId}-badge`);
+          if (fill)  fill.style.width = pct + '%';
+          if (pctEl) pctEl.textContent = pct + '%' + (d.currentKbps ? ` · ${Math.round(d.currentKbps)} kbps` : '');
+          if (badge) badge.innerHTML = `<span class="spinner"></span> ${pct}%`;
+        });
+
+        sse.addEventListener('done', e => {
+          sse.close();
+          const d = JSON.parse(e.data);
+          const fill  = document.getElementById(`${jobElId}-fill`);
+          const badge = document.getElementById(`${jobElId}-badge`);
+          const status = document.getElementById(`${jobElId}-status`);
+          if (fill)  { fill.style.width = '100%'; fill.classList.add('done'); }
+          if (badge) badge.innerHTML = '✅ Done';
+          if (badge) badge.className = 'status-badge done';
+          if (status) status.innerHTML = `
+            <div class="progress-track"><div class="progress-fill done" style="width:100%"></div></div>
+            <div class="file-actions" style="margin-top:8px">
+              <a class="btn-sm download" href="${d.downloadUrl}" download="${escAttr(d.filename)}">⬇️ Download ${(FMT_LABELS[fmt]||fmt.toUpperCase())}</a>
+            </div>
+            <div class="audio-preview" style="margin-top:10px">
+              <audio controls preload="none" src="${d.downloadUrl}" style="width:100%;height:40px;border-radius:8px;accent-color:var(--neon-cyan)"></audio>
+            </div>
+          `;
+          saveToHistory({ origName: title, format: fmt, bitrate, downloadUrl: d.downloadUrl, filename: d.filename });
+          showToast('success', '✅ Done!', `${d.filename} is ready`);
+          resolve();
+        });
+
+        sse.addEventListener('error', e => {
+          sse.close();
+          let msg = 'Conversion failed';
+          try { msg = JSON.parse(e.data).message; } catch(_) {}
+          const badge = document.getElementById(`${jobElId}-badge`);
+          if (badge) { badge.textContent = '❌ Failed'; badge.className = 'status-badge error'; }
+          const statusEl = document.getElementById(`${jobElId}-status`);
+          if (statusEl) statusEl.innerHTML = `<span class="status-badge error">❌ ${escHtml(msg)}</span>`;
+          showToast('error', '❌ Failed', msg);
+          resolve();
+        });
+
+        sse.onerror = () => {
+          sse.close();
+          const badge = document.getElementById(`${jobElId}-badge`);
+          if (badge) { badge.textContent = '❌ Connection lost'; badge.className = 'status-badge error'; }
+          showToast('error', '❌ Connection Lost', 'Check if the server is running');
+          resolve();
+        };
+      });
+
+    } catch (err) {
+      const statusEl = document.getElementById(`${jobElId}-status`);
+      if (statusEl) statusEl.innerHTML = `<span class="status-badge error">❌ ${escHtml(err.message)}</span>`;
+      showToast('error', '❌ Error', err.message);
+    } finally {
+      urlConverting = false;
+      btn.disabled  = false;
+      btnText.textContent = 'Convert URL';
+    }
+  };
+
+  </script>
+</body>
+</html>
