@@ -331,14 +331,29 @@ app.get('/url-info', async (req, res) => {
 
     // Try yt-dlp for all URLs (supports YouTube + 1000+ sites)
     try {
-      const info = await youtubedl(url, {
-        dumpSingleJson: true,
-        noCheckCertificates: true,
-        noWarnings: true,
-        preferFreeFormats: true,
-        addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
-        ffmpegLocation: path.dirname(ffmpegPath)
-      });
+      let info;
+      try {
+        // Try with cookies first
+        info = await youtubedl(url, {
+          dumpSingleJson: true,
+          noCheckCertificates: true,
+          noWarnings: true,
+          preferFreeFormats: true,
+          cookies: 'cookies-from-browser:chrome',
+          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          ffmpegLocation: path.dirname(ffmpegPath)
+        });
+      } catch (cookieErr) {
+        // Fallback: try without cookies
+        info = await youtubedl(url, {
+          dumpSingleJson: true,
+          noCheckCertificates: true,
+          noWarnings: true,
+          preferFreeFormats: true,
+          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          ffmpegLocation: path.dirname(ffmpegPath)
+        });
+      }
 
       const platform = info.extractor_key || info.extractor || 'generic';
       return res.json({
@@ -442,29 +457,58 @@ async function convertUrlWithYtDlp(jobId, url) {
   broadcastToJob(jobId, 'progress', { percent: 5, timemark: '00:00:00', currentKbps: 0 });
 
   try {
-    // Get video title first
-    const info = await youtubedl(url, {
-      dumpSingleJson: true,
-      noCheckCertificates: true,
-      noWarnings: true,
-      ffmpegLocation: path.dirname(ffmpegPath)
-    }).catch(() => null);
+    // Get video title first (try with cookies, fallback to no-cookies)
+    let info = null;
+    try {
+      info = await youtubedl(url, {
+        dumpSingleJson: true,
+        noCheckCertificates: true,
+        noWarnings: true,
+        cookies: 'cookies-from-browser:chrome',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        ffmpegLocation: path.dirname(ffmpegPath)
+      });
+    } catch (cookieErr) {
+      // Fallback: try without cookies
+      info = await youtubedl(url, {
+        dumpSingleJson: true,
+        noCheckCertificates: true,
+        noWarnings: true,
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        ffmpegLocation: path.dirname(ffmpegPath)
+      }).catch(() => null);
+    }
 
     if (info && info.title) {
       job.origName = sanitizeFilename(info.title);
     }
 
-    // Download audio
-    await youtubedl(url, {
-      extractAudio: true,
-      audioFormat: 'best',
-      output: tmpAudio,
-      noCheckCertificates: true,
-      noWarnings: true,
-      preferFreeFormats: true,
-      addHeader: ['referer:youtube.com', 'user-agent:googlebot'],
-      ffmpegLocation: path.dirname(ffmpegPath)
-    });
+    // Download audio (try with cookies first, fallback to no-cookies)
+    try {
+      await youtubedl(url, {
+        extractAudio: true,
+        audioFormat: 'best',
+        output: tmpAudio,
+        noCheckCertificates: true,
+        noWarnings: true,
+        preferFreeFormats: true,
+        cookies: 'cookies-from-browser:chrome',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        ffmpegLocation: path.dirname(ffmpegPath)
+      });
+    } catch (downloadErr) {
+      // Fallback: try without cookies
+      await youtubedl(url, {
+        extractAudio: true,
+        audioFormat: 'best',
+        output: tmpAudio,
+        noCheckCertificates: true,
+        noWarnings: true,
+        preferFreeFormats: true,
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        ffmpegLocation: path.dirname(ffmpegPath)
+      });
+    }
 
     // Find the downloaded file (yt-dlp replaces %(ext)s with actual extension)
     const files = fs.readdirSync(UPLOADS_DIR).filter(f => f.startsWith(jobId));
